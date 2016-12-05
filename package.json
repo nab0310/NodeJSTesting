@@ -1,0 +1,25 @@
+{
+  "name": "nodeproj",
+  "version": "1.0.0",
+  "description": "Portfolio 3",
+  "main": "hello_http.js",
+  "dependencies": {
+    "express": "^4.14.0",
+    "socket.io": "^1.7.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AustinKerr42/NodeProj.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AustinKerr42/NodeProj/issues"
+  },
+  "homepage": "https://github.com/AustinKerr42/NodeProj#readme"
+}
