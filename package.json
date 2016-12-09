@@ -1,0 +1,20 @@
+{
+  "name": "nodeproj",
+  "version": "1.0.0",
+  "description": "This is a read me file!",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nab0310/NodeJSTesting.git"
+  },
+  "author": "Nick Behrens",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nab0310/NodeJSTesting/issues"
+  },
+  "homepage": "https://github.com/nab0310/NodeJSTesting#readme",
+  "main": "app.js"
+}
