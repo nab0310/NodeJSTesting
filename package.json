@@ -6,6 +6,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js"
   },
+  "dependencies": {
+    "socket.io": "1.7.1",
+    "express": "4.14.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nab0310/NodeJSTesting.git"
