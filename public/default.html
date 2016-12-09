@@ -6,26 +6,25 @@
       body {
     		overflow-y: auto;
     		
+        font: 12px arial, sans-serif;
+
     		display: flex;
     		flex-flow: column;
     		align-content: center;
     		align-items: center;
-        	background-color: rgb(34,177,76);
 
-        	background-image: url('img/chesspiece.jpg');
-        	background-position: top right;
-        	background-repeat: no-repeat;
-        	background-attachment: fixed;
+        background-color: rgb(34,177,76);
+      	background-image: url('img/chesspiece.jpg');
+      	background-position: top right;
+      	background-repeat: no-repeat;
+      	background-attachment: fixed;
     	}
     	.page {
     		margin-top: 20px;
     	}
-      .game{
-
-      }
       .userInfo {
         text-align: right;
-        font: bold 12px arial, sans-serif;
+        font: bold;
       }
 
     </style>
@@ -43,6 +42,7 @@
       <input id='username'></input>
       <button id='login'>Login</button>
     </div>
+
     <div class="page lobby" id='page-lobby'>
       <h1>Chess with Friends</h1>
       <h2 id='userNameLabel'></h2>
@@ -63,7 +63,7 @@
       <button id='game-back'>Back</button>
       <button id='game-quit'>Resign</button><br>
       <div id='game-board' style="width: 400px">
-      </div>
+      </div>    
     </div>
 
 
@@ -110,18 +110,46 @@
       board = new ChessBoard('game-board', cfg);
     }
 
-
-    var handleMove = function(source, target) {
-        var move = game.move({from: source, to: target});
-        if(move === null){
-          return 'snapback';
+		var handleMove = function(source, target) {
+		    var move = game.move({from: source, to: target});
+		    if(move === null){
+		    	return 'snapback';
+		    }else if(game.in_checkmate()){
+          console.log("You're screwed.");
         }else{
-          socket.emit('move', move);
-          console.log('Fen is: '+game.fen());
-          socket.emit('gameMove',{id:currentGameId ,gameState:game.fen(),game:serverGame});
-          console.log(move);
-        }
-    };
+		    	socket.emit('move', move);
+		    	console.log('Fen is: '+game.fen());
+		    	socket.emit('gameMove',{id:currentGameId ,gameState:game.fen(),game:serverGame});
+		    	console.log(move);
+		    }
+		}
+		 $(document).ready(function(){
+		// 	initGame();
+			$('#page-login').show();
+			$('#page-lobby').hide();
+			$('#page-game').hide();
+		 });
+		socket.on('move', function (msg) {
+    		game.move(msg);
+    		board.position(game.fen()); //fen is layout
+		});
+    	socket.on('newUser', function (userId) {
+        	addUser(userId);
+    	});
+    	socket.on('leavelobby',function(userId){
+    		removeUser(userId);
+    	});
+    	socket.on('loginResponse', function(data){
+    		usersOnline = data.users;
+    		updateUserList();
+    	});
+    	socket.on('joinGame',function(data){
+    		console.log("joined as game id: " + data.game.id );
+    		userColor = data.color;
+    		currentGameId = data.game.id;
+    		initGame(data.game);
+
+      });
 
     var onDragStart = function(source, piece, position, orientation) {
         var trun = game.turn();
@@ -160,10 +188,13 @@
         currentGameId = data.game.id;
         initGame(data.game);
 
-          $('#page-lobby').hide();
-          $('#page-game').show();
+	        $('#page-lobby').hide();
+        	$('#page-game').show();
+    	});
+    	socket.on('addGame',function(data){
+    		addGame(data.game);
+    	});
 
-      });
       socket.on('joinGameInProgress',function(data){
         userColor = data.color;
         currentGameId = data.game.id;
@@ -175,7 +206,10 @@
       });
       socket.on('addGame',function(data){
         addGame(data.game);
-      });
+
+    		$('#page-game').hide();
+   	    $('#page-lobby').show();
+    	});
 
       socket.on('addUser',function(data){
         addUser(data.id);
@@ -206,6 +240,7 @@
         var redirect = confirm('Do you want to go back to the lobby?');
 
         if(redirect){
+        	socket.emit('backToLobby',{color:data.color, game:data.game})
           $('#page-game').hide();
           $('#page-lobby').show();
         }
@@ -249,7 +284,6 @@
       socket.emit('quitGame',{username: username, game: serverGame, color:userColor});
       removeGame(serverGame.id);
     });
-
 
         //Functions//
       var addUser = function(userId) {

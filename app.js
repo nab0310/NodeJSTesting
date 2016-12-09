@@ -74,6 +74,7 @@ io.on('connection', function(socket) {
     socket.on('quitGame',function(data){
         var game = data.game;
         var username = data.username;
+        var end = data.end;
 
         socket.broadcast.emit('endGame',{id:game.id});
 
@@ -94,21 +95,29 @@ io.on('connection', function(socket) {
         }*/
         
         delete activeGames[game.id];
+        var i=0;
+        for(i-0;i<serverGames.length;i++){
+            if(serverGames[i].id==game.id){
+                serverGames.splice(i,1);
+            }
+        }
 
         if(data.color=="white"){
             activeUsers[game.users.white].emit('loser');
             if(activeUsers[game.users.black]){
-                activeUsers[game.users.black].emit('winner');
+                activeUsers[game.users.black].emit('winner',{color:"black",game:game});
             }else{
-                playingUsers[game.users.black].emit('winner');
+                playingUsers[game.users.black].emit('winner',{color:"black",game:game});
             }
+            socket.broadcast.emit('updateUsersAndGames',{users: Object.keys(activeUsers), games: serverGames});
         }else{
             activeUsers[game.users.black].emit('loser');
             if(activeUsers[game.users.white]){
-                activeUsers[game.users.white].emit('winner');
+                activeUsers[game.users.white].emit('winner',{color:"white",game:game});
             }else{
-                playingUsers[game.users.white].emit('winner');
+                playingUsers[game.users.white].emit('winner',{color:"white",game:game});
             }
+            socket.broadcast.emit('updateUsersAndGames',{users: Object.keys(activeUsers), games: serverGames});
         }
     });
     socket.on('backToLobby',function(data){
