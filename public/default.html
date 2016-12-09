@@ -247,6 +247,7 @@
       currentGameId ="";
       console.log(username + " has forfieted the game.");
       socket.emit('quitGame',{username: username, game: serverGame, color:userColor});
+      removeGame(serverGame.id);
     });
 
 
