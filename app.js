@@ -104,10 +104,10 @@ io.on('connection', function(socket) {
             }
         }else{
             activeUsers[game.users.black].emit('loser');
-            if(activeUsers[game.users.black]){
+            if(activeUsers[game.users.white]){
                 activeUsers[game.users.white].emit('winner');
             }else{
-                playingUsers[game.users.black].emit('winner');
+                playingUsers[game.users.white].emit('winner');
             }
         }
     });
