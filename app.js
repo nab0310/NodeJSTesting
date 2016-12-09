@@ -97,10 +97,18 @@ io.on('connection', function(socket) {
 
         if(data.color=="white"){
             activeUsers[game.users.white].emit('loser');
-            activeUsers[game.users.black].emit('winner');
+            if(activeUsers[game.users.black]){
+                activeUsers[game.users.black].emit('winner');
+            }else{
+                playingUsers[game.users.black].emit('winner');
+            }
         }else{
             activeUsers[game.users.black].emit('loser');
-            activeUsers[game.users.white].emit('winner');
+            if(activeUsers[game.users.black]){
+                activeUsers[game.users.white].emit('winner');
+            }else{
+                playingUsers[game.users.black].emit('winner');
+            }
         }
     });
     socket.on('backToLobby',function(data){

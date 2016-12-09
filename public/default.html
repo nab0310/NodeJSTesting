@@ -68,61 +68,62 @@
 
 
     <script>
-    	var usersOnline = [];
-    	var activeGames = [];
-    	var userColor;
-    	var username;
-    	var serverGame;
-    	var currentGameId;
-    	var socket = io.connect();
-	          
-		var initGame = function (serverGameState) {
-		serverGame = serverGameState; 
+    $(document).ready(function() {
+      var usersOnline = [];
+      var activeGames = [];
+      var userColor;
+      var username;
+      var serverGame;
+      var currentGameId;
+      var socket = io.connect();
+            
+    var initGame = function (serverGameState) {
+    serverGame = serverGameState; 
 
-			var cfg = {
-			draggable: true,
-			showNotation: false,
-			orientation: userColor,
-			position: serverGame.board ? serverGame.board : 'start',
-			onDragStart: onDragStart,
-			onDrop: handleMove
-			};
-			   
-			game = serverGame.board ? new Chess(serverGame.board) : new Chess();
-			socket.emit('gameInitFen',{gameFen: game.fen(),id:serverGameState.id});
-			board = new ChessBoard('game-board', cfg);
-		}
+      var cfg = {
+      draggable: true,
+      showNotation: false,
+      orientation: userColor,
+      position: serverGame.board ? serverGame.board : 'start',
+      onDragStart: onDragStart,
+      onDrop: handleMove
+      };
+         
+      game = serverGame.board ? new Chess(serverGame.board) : new Chess();
+      socket.emit('gameInitFen',{gameFen: game.fen(),id:serverGameState.id});
+      board = new ChessBoard('game-board', cfg);
+    }
 
-		var initGameFromFen = function(fen){
-			console.log('Intilizing game from fen of: '+fen);
-			var cfg = {
-			draggable: true,
-			showNotation: false,
-			orientation: userColor,
-			position: fen,
-			onDragStart: onDragStart,
-			onDrop: handleMove
-			};
-			   
-			game = new Chess();
-			game.load(fen);
-			board = new ChessBoard('game-board', cfg);
-		}
+    var initGameFromFen = function(fen){
+      console.log('Intilizing game from fen of: '+fen);
+      var cfg = {
+      draggable: true,
+      showNotation: false,
+      orientation: userColor,
+      position: fen,
+      onDragStart: onDragStart,
+      onDrop: handleMove
+      };
+         
+      game = new Chess();
+      game.load(fen);
+      board = new ChessBoard('game-board', cfg);
+    }
 
 
-		var handleMove = function(source, target) {
-		    var move = game.move({from: source, to: target});
-		    if(move === null){
-		    	return 'snapback';
-		    }else{
-		    	socket.emit('move', move);
-		    	console.log('Fen is: '+game.fen());
-		    	socket.emit('gameMove',{id:currentGameId ,gameState:game.fen(),game:serverGame});
-		    	console.log(move);
-		    }
-		};
+    var handleMove = function(source, target) {
+        var move = game.move({from: source, to: target});
+        if(move === null){
+          return 'snapback';
+        }else{
+          socket.emit('move', move);
+          console.log('Fen is: '+game.fen());
+          socket.emit('gameMove',{id:currentGameId ,gameState:game.fen(),game:serverGame});
+          console.log(move);
+        }
+    };
 
-		var onDragStart = function(source, piece, position, orientation) {
+    var onDragStart = function(source, piece, position, orientation) {
         var trun = game.turn();
         var pieceColor = piece.search(/^w/);
         var gameOver = game.game_over();
@@ -134,106 +135,106 @@
         }
       };  
 
-		 $(document).ready(function(){
-			$('#page-login').show();
-			$('#page-lobby').hide();
-			$('#page-game').hide();
-		 });
-		socket.on('move', function (msg) {
-    		game.move(msg);
-    		board.position(game.fen()); //fen is layout
-		});
-    	socket.on('newUser', function (userId) {
-        	addUser(userId);
-    	});
-    	socket.on('leavelobby',function(userId){
-    		removeUser(userId);
-    	});
-    	socket.on('loginResponse', function(data){
-    		usersOnline = data.users;
-    		updateUserList();
-    	});
-    	socket.on('joinGame',function(data){
-    		console.log("joined as game id: " + data.game.id );
-    		userColor = data.color;
-    		currentGameId = data.game.id;
-    		initGame(data.game);
+     $(document).ready(function(){
+      $('#page-login').show();
+      $('#page-lobby').hide();
+      $('#page-game').hide();
+     });
+    socket.on('move', function (msg) {
+        game.move(msg);
+        board.position(game.fen()); //fen is layout
+    });
+      socket.on('newUser', function (userId) {
+          addUser(userId);
+      });
+      socket.on('leavelobby',function(userId){
+        removeUser(userId);
+      });
+      socket.on('loginResponse', function(data){
+        usersOnline = data.users;
+        updateUserList();
+      });
+      socket.on('joinGame',function(data){
+        console.log("joined as game id: " + data.game.id );
+        userColor = data.color;
+        currentGameId = data.game.id;
+        initGame(data.game);
 
-	        $('#page-lobby').hide();
-        	$('#page-game').show();
+          $('#page-lobby').hide();
+          $('#page-game').show();
 
-    	});
-    	socket.on('joinGameInProgress',function(data){
-    		userColor = data.color;
-    		currentGameId = data.game.id;
-    		console.log('Initlizing game from fen');
-    		initGameFromFen(data.gameState);
+      });
+      socket.on('joinGameInProgress',function(data){
+        userColor = data.color;
+        currentGameId = data.game.id;
+        console.log('Initlizing game from fen');
+        initGameFromFen(data.gameState);
 
-	        $('#page-lobby').hide();
-        	$('#page-game').show();
-    	});
-    	socket.on('addGame',function(data){
-    		addGame(data.game);
-    	});
+          $('#page-lobby').hide();
+          $('#page-game').show();
+      });
+      socket.on('addGame',function(data){
+        addGame(data.game);
+      });
 
-    	socket.on('addUser',function(data){
-    		addUser(data.id);
-    	});
-    	socket.on('endGame',function(data){
-    		removeGame(data.id);
-    	});
-    	socket.on('sendUserBackToLobby',function(data){
-    		console.log('Games After Back to lobby call'+activeGames);
-    		usersOnline = data.users;
-    		updateUserList();
+      socket.on('addUser',function(data){
+        addUser(data.id);
+      });
+      socket.on('endGame',function(data){
+        removeGame(data.id);
+      });
+      socket.on('sendUserBackToLobby',function(data){
+        console.log('Games After Back to lobby call'+activeGames);
+        usersOnline = data.users;
+        updateUserList();
 
-    		$('#page-game').hide();
-   	        $('#page-lobby').show();
-    	});
+        $('#page-game').hide();
+            $('#page-lobby').show();
+      });
 
-    	socket.on('updateUsersAndGames',function(data){
-    		usersOnline = data.users;
-    		updateUserList();
-    		console.log('Games object passed over is: '+data.games);
-    		//Objecct comes through as array with index of game id
-    		activeGames = data.games;
-    		updateGameList();
+      socket.on('updateUsersAndGames',function(data){
+        usersOnline = data.users;
+        updateUserList();
+        console.log('Games object passed over is: '+data.games);
+        //Objecct comes through as array with index of game id
+        activeGames = data.games;
+        updateGameList();
 
-    	});
-    	socket.on('winner',function(data){
-    		alert('You Won!');
-    		var redirect = confirm('Do you want to go back to the lobby?');
+      });
+      socket.on('winner',function(data){
+        alert('You Won!');
+        var redirect = confirm('Do you want to go back to the lobby?');
 
-    		if(redirect){
-    			$('#page-game').hide();
-    			$('#page-lobby').show();
-    		}
-    	});
-    	socket.on('loser',function(data){
-    		alert('You Lost!');
-    		var redirect = confirm('Do you want to go back to the lobby?');
+        if(redirect){
+          $('#page-game').hide();
+          $('#page-lobby').show();
+        }
+      });
+      socket.on('loser',function(data){
+        alert('You Lost!');
+        var redirect = confirm('Do you want to go back to the lobby?');
 
-    		if(redirect){
-    			$('#page-game').hide();
-    			$('#page-lobby').show();
-    		}
-    	});
+        if(redirect){
+          $('#page-game').hide();
+          $('#page-lobby').show();
+        }
+      });
 
-		//Navigation//
-		$('#login').on('click', function() {
-			console.log("Login Clicked")
-	    username = $('#username').val();
+    //Navigation//
+    $('#login').on('click', function() {
+      console.log("Login Clicked")
+      username = $('#username').val();
 
-	    console.log("Username is: "+username);
-	        
-	    if (username.length > 0) {
-  	    $('#userLabel').text(username);
-  	    socket.emit('login', username);
-  	            
-  	    $('#page-login').hide();
+      console.log("Username is: "+username);
+          
+      if (username.length > 0) {
+        $('#userLabel').text(username);
+        socket.emit('login', username);
+                
+        $('#page-login').hide();
         $(".userInfo").text("Username: " + username);
-  	    $('#page-lobby').show();
-	    }
+        $('#page-lobby').show();
+      }
     });
     $('#game-back').on('click', function() {
       console.log("Back clicked.");
@@ -246,77 +247,76 @@
       currentGameId ="";
       console.log(username + " has forfieted the game.");
       socket.emit('quitGame',{username: username, game: serverGame, color:userColor});
-              
-          removeGame(serverGame.id);
     });
 
 
         //Functions//
       var addUser = function(userId) {
-       	usersOnline.push(userId);
-       	updateUserList();
-   		};
+        usersOnline.push(userId);
+        updateUserList();
+      };
 
-   		var removeUser = function(userId){
-   			for (var i=0; i<usersOnline.length; i++) {
+      var removeUser = function(userId){
+        for (var i=0; i<usersOnline.length; i++) {
             if (usersOnline[i] === userId) {
                 usersOnline.splice(i, 1);
             }
          }
          
          updateUserList();
-   		}
+      }
 
-   		var removeGame = function(gameId){
-   			for (var i=0; i<activeGames.length; i++) {
-		        if (activeGames[i].id == gameId) {
-		            activeGames.splice(i, 1);
-		        }
+      var removeGame = function(gameId){
+        for (var i=0; i<activeGames.length; i++) {
+            if (activeGames[i].id == gameId) {
+                activeGames.splice(i, 1);
+            }
          }
          
          updateGameList();
-   		}
+      }
 
-   		var addGame = function(game) {
-   			var i;
-   			var isDuplicate = false;
-   			for(i=0;i<activeGames.length;i++){
-   				if(game.id==activeGames.game.id){
-   					isDuplicate = true;
-   				}
-   			}
-   			if(!isDuplicate){
-   				activeGames.push(game);
-   			console.log('Game with id: '+game.id+"and Players: "+game.users.white+" and "+game.users.black);
-   			}
-   			updateGameList();
-   		};
+      var addGame = function(game) {
+        var i;
+        var isDuplicate = false;
+        for(i=0;i<activeGames.length;i++){
+          if(game.id==activeGames.game.id){
+            isDuplicate = true;
+          }
+        }
+        if(!isDuplicate){
+          activeGames.push(game);
+        console.log('Game with id: '+game.id+"and Players: "+game.users.white+" and "+game.users.black);
+        }
+        updateGameList();
+      };
 
-   		var updateGameList = function(){
-   			document.getElementById('gamesList').innerHTML ='';
-   			activeGames.forEach(function(game){
-   				if(username == game.users.black || username == game.users.white){
-   					$('#gamesList').append($('<button>')
-   											.text(game.id)
-   											.on('click',function(){
-   												socket.emit('retriveGame',game.id);
-   											}));
-   				}
-   			});
-   		}
+      var updateGameList = function(){
+        document.getElementById('gamesList').innerHTML ='';
+        activeGames.forEach(function(game){
+          if(username == game.users.black || username == game.users.white){
+            $('#gamesList').append($('<button>')
+                        .text(game.id)
+                        .on('click',function(){
+                          socket.emit('retriveGame',game.id);
+                        }));
+          }
+        });
+      }
 
-	    var updateUserList = function() {
-	        document.getElementById('userList').innerHTML = '';
-	        usersOnline.forEach(function(user) {
-	        	if(user != username){
-		          $('#userList').append($('<button>')
-		                        .text(user)
-		                        .on('click', function() {
-		                        	socket.emit('inviteToGame',user);
-		                        }));
-		      }
-	        });
-    	};
+      var updateUserList = function() {
+          document.getElementById('userList').innerHTML = '';
+          usersOnline.forEach(function(user) {
+            if(user != username){
+              $('#userList').append($('<button>')
+                            .text(user)
+                            .on('click', function() {
+                              socket.emit('inviteToGame',user);
+                            }));
+          }
+          });
+      };
+    });
 	</script>
 </body>
 </html>
