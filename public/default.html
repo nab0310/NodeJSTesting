@@ -63,7 +63,10 @@
       <button id='game-back'>Back</button>
       <button id='game-quit'>Resign</button><br>
       <div id='game-board' style="width: 400px">
-      </div>    
+      </div>
+      <div id='whiteTurn'>It is whites turn.</div>
+      <div id='blackTurn'>It is blacks turn.</div> 
+      <div>You are playing as the bottom pieces.</div>
     </div>
 
 
@@ -84,13 +87,16 @@
       draggable: true,
       showNotation: false,
       orientation: userColor,
-      position: serverGame.board ? serverGame.board : 'start',
+      position: 'start',
       onDragStart: onDragStart,
       onDrop: handleMove
       };
          
-      game = serverGame.board ? new Chess(serverGame.board) : new Chess();
+      game = new Chess();
       socket.emit('gameInitFen',{gameFen: game.fen(),id:serverGameState.id});
+      serverGame.turn = 'w';
+      $('#blackTurn').hide();
+      $('#whiteTurn').show();
       board = new ChessBoard('game-board', cfg);
     }
 
@@ -107,6 +113,15 @@
          
       game = new Chess();
       game.load(fen);
+      if(game.turn()=='w'){
+      	serverGame.turn = 'b';
+     	$('#blackTurn').hide();
+      	$('#whiteTurn').show();
+      }else{
+      	serverGame.turn = 'w';
+     	$('#blackTurn').show();
+      	$('#whiteTurn').hide();
+      }
       board = new ChessBoard('game-board', cfg);
     }
 
@@ -115,11 +130,26 @@
 		    if(move === null){
 		    	return 'snapback';
 		    }else if(game.in_checkmate()){
-          console.log("You're screwed.");
-        }else{
 		    	socket.emit('move', move);
 		    	console.log('Fen is: '+game.fen());
 		    	socket.emit('gameMove',{id:currentGameId ,gameState:game.fen(),game:serverGame});
+          		console.log("You're screwed.");
+           		socket.emit('checkMate',{username: username, game: serverGame, color:userColor});
+        		removeGame(serverGame.id);
+        }else{
+        		if(game.turn()=='w'){
+        			serverGame.turn = 'b';
+			     	$('#blackTurn').hide();
+			      	$('#whiteTurn').show();
+			      }else{
+			      	serverGame.turn = 'w';
+			     	$('#blackTurn').show();
+			      	$('#whiteTurn').hide();
+      			}
+		    	socket.emit('move', move);
+		    	console.log('Fen is: '+game.fen());
+		    	socket.emit('gameMove',{id:currentGameId ,gameState:game.fen(),game:serverGame});
+		    	socket.emit('updateTurn',{color:userColor, game:serverGame});
 		    	console.log(move);
 		    }
 		}
@@ -143,13 +173,6 @@
     		usersOnline = data.users;
     		updateUserList();
     	});
-    	socket.on('joinGame',function(data){
-    		console.log("joined as game id: " + data.game.id );
-    		userColor = data.color;
-    		currentGameId = data.game.id;
-    		initGame(data.game);
-
-      });
 
     var onDragStart = function(source, piece, position, orientation) {
         var trun = game.turn();
@@ -162,26 +185,6 @@
           return false;
         }
       };  
-
-     $(document).ready(function(){
-      $('#page-login').show();
-      $('#page-lobby').hide();
-      $('#page-game').hide();
-     });
-    socket.on('move', function (msg) {
-        game.move(msg);
-        board.position(game.fen()); //fen is layout
-    });
-      socket.on('newUser', function (userId) {
-          addUser(userId);
-      });
-      socket.on('leavelobby',function(userId){
-        removeUser(userId);
-      });
-      socket.on('loginResponse', function(data){
-        usersOnline = data.users;
-        updateUserList();
-      });
       socket.on('joinGame',function(data){
         console.log("joined as game id: " + data.game.id );
         userColor = data.color;
@@ -210,7 +213,15 @@
     		$('#page-game').hide();
    	    $('#page-lobby').show();
     	});
-
+      socket.on('ChangeTurns',function(data){
+      	if(data.game.turn=='w'){
+	     	$('#blackTurn').show();
+	      	$('#whiteTurn').hide();
+	    }else{
+	     	$('#blackTurn').hide();
+	      	$('#whiteTurn').show();
+		}
+      });
       socket.on('addUser',function(data){
         addUser(data.id);
       });
@@ -236,7 +247,7 @@
 
       });
       socket.on('winner',function(data){
-        alert('You Won!');
+        alert('You Won Game '+data.game.id+' by resignation!');
         var redirect = confirm('Do you want to go back to the lobby?');
 
         if(redirect){
@@ -250,6 +261,26 @@
         var redirect = confirm('Do you want to go back to the lobby?');
 
         if(redirect){
+          $('#page-game').hide();
+          $('#page-lobby').show();
+        }
+      });
+     socket.on('winnerCheckMate',function(data){
+        alert('You Won By Checkmate!');
+        var redirect = confirm('Do you want to go back to the lobby?');
+
+        if(redirect){
+          $('#page-game').hide();
+          $('#page-lobby').show();
+        }
+      });
+
+      socket.on('loserCheckMate',function(data){
+        alert('You Lost game '+data.game.id+' By Checkmate!');
+        var redirect = confirm('Do you want to go back to the lobby?');
+
+        if(redirect){
+       	  socket.emit('backToLobby',{color:data.color, game:data.game})
           $('#page-game').hide();
           $('#page-lobby').show();
         }
